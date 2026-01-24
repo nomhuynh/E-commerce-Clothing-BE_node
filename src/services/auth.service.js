@@ -2,6 +2,33 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const config = require('../config/config');
+const crypto = require('crypto');
+const emailService = require('./email.service');
+const { Op } = require('sequelize');
+
+const validatePassword = (password) => {
+    if (password.length < 8) {
+        return 'Password must be at least 8 characters long';
+    }
+    // Check for at least one letter and one number
+    // Regex: (?=.*[a-zA-Z]) ensures at least one letter, (?=.*\d) ensures at least one number
+    // We can just simple regex test
+    if (!/[a-zA-Z]/.test(password)) {
+        return 'Password must contain at least one letter';
+    }
+    if (!/\d/.test(password)) {
+        return 'Password must contain at least one number';
+    }
+    return null;
+};
+
+const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return 'Invalid email format';
+    }
+    return null;
+};
 
 const registerUser = async (data) => {
     const {
@@ -17,6 +44,22 @@ const registerUser = async (data) => {
     // Validate required fields
     if (!email || !password || !first_name || !last_name) {
         const error = new Error('Missing required fields: email, password, first_name, last_name');
+        error.status = 400;
+        throw error;
+    }
+
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError) {
+        const error = new Error(emailError);
+        error.status = 400;
+        throw error;
+    }
+
+    // Validate password strength
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+        const error = new Error(passwordError);
         error.status = 400;
         throw error;
     }
@@ -113,7 +156,111 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
+const changePassword = async (userId, oldPassword, newPassword) => {
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+        const error = new Error('User not found');
+        error.status = 404;
+        throw error;
+    }
+
+    // Verify old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isMatch) {
+        const error = new Error('Incorrect old password');
+        error.status = 401;
+        throw error;
+    }
+
+    // Validate new password strength
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+        const error = new Error(passwordError);
+        error.status = 400;
+        throw error;
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Update user
+    user.password_hash = password_hash;
+    await user.save();
+
+    return { message: 'Password updated successfully' };
+};
+
+const forgotPassword = async (email) => {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+        // For security, don't reveal if email exists or not
+        return { message: 'If that email address is in our system, we will send you an email to reset your password.' };
+    }
+
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    // Save to user
+    user.reset_password_token = resetToken;
+    user.reset_password_expires = passwordResetExpires;
+    await user.save();
+
+    // Send email
+    try {
+        await emailService.sendResetPasswordEmail(user.email, resetToken);
+    } catch (error) {
+        user.reset_password_token = null;
+        user.reset_password_expires = null;
+        await user.save();
+        throw new Error('There was an error sending the email. Try again later!');
+    }
+
+    return { message: 'If that email address is in our system, we will send you an email to reset your password.' };
+};
+
+const resetPassword = async (token, newPassword) => {
+    // Find user with token and valid expiration
+    const user = await User.findOne({
+        where: {
+            reset_password_token: token,
+            reset_password_expires: { [Op.gt]: Date.now() }
+        }
+    });
+
+    if (!user) {
+        const error = new Error('Password reset token is invalid or has expired');
+        error.status = 400;
+        throw error;
+    }
+
+    // Validate new password strength
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+        const error = new Error(passwordError);
+        error.status = 400; // Correct status code for validation error
+        throw error;
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Update user
+    user.password_hash = password_hash;
+    user.reset_password_token = null;
+    user.reset_password_expires = null;
+    await user.save();
+
+    return { message: 'Password has been reset successfully' };
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    changePassword,
+    forgotPassword,
+    resetPassword
 };
