@@ -36,7 +36,76 @@ const login = async (req, res, next) => {
     }
 };
 
+const changePassword = async (req, res, next) => {
+    try {
+        const { old_password, new_password } = req.body;
+        const userId = req.user.user_id; // Added by auth middleware
+
+        if (!old_password || !new_password) {
+            const error = new Error('Old password and new password are required');
+            error.status = 400;
+            throw error;
+        }
+
+        const result = await authService.changePassword(userId, old_password, new_password);
+
+        res.status(200).json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            const error = new Error('Email is required');
+            error.status = 400;
+            throw error;
+        }
+
+        const result = await authService.forgotPassword(email);
+
+        res.status(200).json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const resetPassword = async (req, res, next) => {
+    try {
+        const { token, new_password } = req.body; // Token can be in body or query, let's assume body
+        // Or cleaner: token from query, password from body. But JSON body is standard.
+        // Let's actually support query param too if we want, but sticking to body is consistent.
+        // Wait, typical flow is clicking link -> Frontend Page (gets token from URL) -> Frontend sends POST API with token in body.
+
+        if (!token || !new_password) {
+            const error = new Error('Token and new password are required');
+            error.status = 400;
+            throw error;
+        }
+
+        const result = await authService.resetPassword(token, new_password);
+
+        res.status(200).json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
-    login
+    login,
+    changePassword,
+    forgotPassword,
+    resetPassword
 };

@@ -75,7 +75,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    last_login_at: DataTypes.DATE
+    last_login_at: DataTypes.DATE,
+    reset_password_token: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    reset_password_expires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    email_verification_token: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    email_verification_expires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
   }, {
     sequelize,
     modelName: 'User',
