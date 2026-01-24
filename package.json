@@ -2,11 +2,11 @@
   "name": "e-commerce-clothing-be_node",
   "version": "1.0.0",
   "description": "A RESTful API backend server for an e-commerce clothing platform built with Node.js, Express, and MySQL.",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/nomhuynh/E-commerce-Clothing-BE_node#readme",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^5.2.1"
   },
   "devDependencies": {
