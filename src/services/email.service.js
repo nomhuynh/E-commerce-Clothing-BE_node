@@ -1,10 +1,9 @@
 const nodemailer = require('nodemailer');
 const config = require('../config/config');
-
 const transporter = nodemailer.createTransport(config.email.smtp);
 
 const sendResetPasswordEmail = async (to, token) => {
-    const resetUrl = `http://localhost:3000/reset-password?token=${token}`; // Assuming Frontend is on port 3000
+    const resetUrl = `${process.env.FRONT_END_URL}reset-password?token=${token}`; // Assuming Frontend is on port 3000
 
     const message = {
         from: config.email.from,
