@@ -125,6 +125,12 @@ const loginUser = async ({ email, password }) => {
     }
 
     // Check if user is active
+    if (user.status === 'BANNED') {
+        const error = new Error('Your account has been suspended. Please contact support.');
+        error.status = 403; // Forbidden
+        throw error;
+    }
+
     if (user.status !== 'ACTIVE') {
         const error = new Error('User account is not active');
         error.status = 403; // Forbidden
@@ -277,13 +283,15 @@ const loginWithGoogle = async (idToken) => {
             user.avatar_url = picture;
         }
 
-        // If user doesn't have google id stored but email matches (e.g. registered locally first)
-        // We can update the auth_provider info or keep as is.
-        // Let's update auth_provider_id if it's currently null just to be safe, BUT
-        // strict "auth_provider" field might be 'local'.
-        // Flexible approach: Just Log them in.
+
 
         // Ensure user is active
+        if (user.status === 'BANNED') {
+            const error = new Error('Your account has been suspended. Please contact support.');
+            error.status = 403;
+            throw error;
+        }
+
         if (user.status !== 'ACTIVE') {
             const error = new Error('User account is not active');
             error.status = 403;
