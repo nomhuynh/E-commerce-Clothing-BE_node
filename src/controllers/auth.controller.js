@@ -102,10 +102,30 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+const loginWithGoogle = async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            const error = new Error('Token is required');
+            error.status = 400;
+            throw error;
+        }
+
+        const data = await authService.loginWithGoogle(token);
+        res.json({
+            success: true,
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
     login,
     changePassword,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    loginWithGoogle
 };
