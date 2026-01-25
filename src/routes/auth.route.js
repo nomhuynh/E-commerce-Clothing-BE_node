@@ -10,4 +10,7 @@ router.post('/change-password', verifyToken, authController.changePassword);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
+// Google Auth
+router.post('/google', authController.loginWithGoogle);
+
 module.exports = router;

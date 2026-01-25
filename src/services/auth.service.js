@@ -6,13 +6,13 @@ const crypto = require('crypto');
 const emailService = require('./email.service');
 const { Op } = require('sequelize');
 
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(config.google.client_id);
+
 const validatePassword = (password) => {
     if (password.length < 8) {
         return 'Password must be at least 8 characters long';
     }
-    // Check for at least one letter and one number
-    // Regex: (?=.*[a-zA-Z]) ensures at least one letter, (?=.*\d) ensures at least one number
-    // We can just simple regex test
     if (!/[a-zA-Z]/.test(password)) {
         return 'Password must contain at least one letter';
     }
@@ -257,10 +257,91 @@ const resetPassword = async (token, newPassword) => {
     return { message: 'Password has been reset successfully' };
 };
 
+const loginWithGoogle = async (idToken) => {
+    // Verify Google Token
+    const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: config.google.client_id
+    });
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture, sub: googleId } = payload;
+
+    // Check if user exists
+    let user = await User.findOne({ where: { email } });
+
+    if (user) {
+        // User exists
+        // If user was created with local auth, we might want to link or just allow login
+        // Update avatar if not set
+        if (!user.avatar_url) {
+            user.avatar_url = picture;
+        }
+
+        // If user doesn't have google id stored but email matches (e.g. registered locally first)
+        // We can update the auth_provider info or keep as is.
+        // Let's update auth_provider_id if it's currently null just to be safe, BUT
+        // strict "auth_provider" field might be 'local'.
+        // Flexible approach: Just Log them in.
+
+        // Ensure user is active
+        if (user.status !== 'ACTIVE') {
+            const error = new Error('User account is not active');
+            error.status = 403;
+            throw error;
+        }
+
+        await user.save();
+    } else {
+        // Create new user
+        // Generate a random password (since they login with Google)
+        const password = crypto.randomBytes(16).toString('hex');
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
+
+        user = await User.create({
+            email,
+            password_hash,
+            first_name: given_name || 'User',
+            last_name: family_name || '',
+            avatar_url: picture,
+            role: 'CUSTOMER',
+            status: 'ACTIVE',
+            is_email_verified: true, // Google verified email
+            auth_provider: 'google',
+            auth_provider_id: googleId
+        });
+    }
+
+    // Generate App Token
+    const jwtPayload = {
+        user_id: user.user_id,
+        role: user.role
+    };
+
+    const token = jwt.sign(jwtPayload, config.jwt.secret, {
+        expiresIn: config.jwt.expiresIn
+    });
+
+    // Update last login
+    user.last_login_at = new Date();
+    await user.save();
+
+    const userResponse = user.toJSON();
+    delete userResponse.password_hash;
+    delete userResponse.deleted_at;
+    delete userResponse.reset_password_token;
+
+    return {
+        user: userResponse,
+        token
+    };
+};
+
 module.exports = {
     registerUser,
     loginUser,
     changePassword,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    loginWithGoogle
 };
