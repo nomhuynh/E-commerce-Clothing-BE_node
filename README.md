@@ -42,7 +42,7 @@ yarn install
 
 3. **Set up environment variables**
 
-Create a `.env` file in the root directory and add the following variables (see `.env.example`). Some values are optional unless you use email, media uploads, or Google login features:
+Create a `.env` file in the root directory and add the following variables (see `.env.example`). Some values are only required if you use email, media uploads, or Google login features:
 
 ```env
 # Server Configuration
@@ -55,7 +55,7 @@ DB_HOST=localhost
 DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=stylex
-# Optional: used when NODE_ENV=test or NODE_ENV=production
+# Optional: overrides used when NODE_ENV=test or NODE_ENV=production
 DB_NAME_TEST=stylex_test
 DB_NAME_PROD=stylex_prod
 
@@ -92,7 +92,7 @@ CREATE DATABASE stylex;
 USE stylex;
 ```
 
-If you plan to run tests or production locally, also create `stylex_test` and `stylex_prod` databases.
+If you plan to run tests or production locally, also create databases matching `DB_NAME_TEST` and `DB_NAME_PROD`.
 
 2. **Run database migrations**
 
