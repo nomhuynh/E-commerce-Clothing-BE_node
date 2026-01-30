@@ -1,0 +1,82 @@
+'use strict';
+const {
+    Model
+} = require('sequelize');
+module.exports = (sequelize, DataTypes) => {
+    class Product extends Model {
+        /**
+         * Helper method for defining associations.
+         * This method is not a part of Sequelize lifecycle.
+         * The `models/index` file will call this method automatically.
+         */
+        static associate(models) {
+            // define association here
+            Product.belongsTo(models.Category, {
+                foreignKey: 'category_id',
+                as: 'category'
+            });
+            Product.belongsTo(models.Material, {
+                foreignKey: 'material_id',
+                as: 'material'
+            });
+        }
+    }
+    Product.init({
+        product_id: {
+            type: DataTypes.BIGINT,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false
+        },
+        category_id: {
+            type: DataTypes.BIGINT,
+            allowNull: false
+        },
+        material_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        name: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+            comment: 'Tên sản phẩm',
+            validate: {
+                notEmpty: true
+            }
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            comment: 'Mô tả chi tiết'
+        },
+        base_price: {
+            type: DataTypes.DECIMAL(15, 2),
+            allowNull: false,
+            comment: 'Giá gốc niêm yết',
+            validate: {
+                min: 0
+            }
+        },
+        gender: {
+            type: DataTypes.ENUM('MALE', 'FEMALE', 'UNISEX'),
+            allowNull: false,
+            comment: 'Giới tính'
+        },
+        age_group: {
+            type: DataTypes.ENUM('ADULT', 'TEEN', 'KID', 'BABY'),
+            allowNull: false,
+            comment: 'Độ tuổi'
+        }
+    }, {
+        sequelize,
+        modelName: 'Product',
+        tableName: 'Products',
+        timestamps: true,
+        underscored: true,
+        paranoid: true,
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+        deletedAt: 'deleted_at',
+    });
+    return Product;
+};
