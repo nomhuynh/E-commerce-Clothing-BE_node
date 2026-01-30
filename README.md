@@ -42,19 +42,20 @@ yarn install
 
 3. **Set up environment variables**
 
-Create a `.env` file in the root directory and add the following variables (see `.env.example`):
+Create a `.env` file in the root directory and add the following variables (see `.env.example`). Some values are optional unless you use email, media uploads, or Google login features:
 
 ```env
 # Server Configuration
 NODE_ENV=development
 PORT=8080
-FRONT_END_URL=your_front_end_url
+FRONT_END_URL=http://localhost:3000
 
 # Database Configuration
 DB_HOST=localhost
 DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=stylex
+# Optional: used when NODE_ENV=test or NODE_ENV=production
 DB_NAME_TEST=stylex_test
 DB_NAME_PROD=stylex_prod
 
@@ -62,19 +63,19 @@ DB_NAME_PROD=stylex_prod
 JWT_SECRET=your_jwt_secret_key_here
 JWT_EXPIRES_IN=7d
 
-# Email Configuration
+# Email Configuration (required for verification + password reset emails)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password
-SMTP_FROM=StyleX Support <no-reply@stylex.com>
+SMTP_FROM="StyleX Support <no-reply@stylex.com>"
 
-# Cloudinary Configuration
+# Cloudinary Configuration (required for avatar uploads)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Google Auth
+# Google Auth (required for Google login)
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```
 
@@ -90,6 +91,8 @@ mysql -u root -p
 CREATE DATABASE stylex;
 USE stylex;
 ```
+
+If you plan to run tests or production locally, also create `stylex_test` and `stylex_prod` databases.
 
 2. **Run database migrations**
 
@@ -147,7 +150,7 @@ http://localhost:8080/api/v1
 #### Users
 - `GET /api/v1/users/profile` - Get current user profile
 - `PATCH /api/v1/users/profile` - Update current user profile
-- `POST /api/v1/users/avatar` - Upload user avatar
+- `POST /api/v1/users/avatar` - Upload user avatar (multipart/form-data, field: `avatar`)
 - `POST /api/v1/users/send-verification-otp` - Send email verification OTP
 - `POST /api/v1/users/verify-email` - Verify email with OTP
 
