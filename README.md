@@ -7,13 +7,12 @@ A RESTful API backend server for an e-commerce clothing platform built with Node
 - RESTful API architecture
 - MySQL database integration
 - User authentication and authorization
-- Product management
-- Shopping cart functionality
-- Order processing
-- Payment integration support
-- Image upload and management
-- Search and filtering capabilities
-- Admin panel endpoints
+- User profile management
+- Address book management
+- Email verification and password reset flows
+- Google authentication support
+- Avatar uploads (Cloudinary)
+- Admin user management endpoints
 
 ## 🚀 Prerequisites
 
@@ -43,37 +42,41 @@ yarn install
 
 3. **Set up environment variables**
 
-Create a `.env` file in the root directory and add the following variables:
+Create a `.env` file in the root directory and add the following variables (see `.env.example`). Some values are only required if you use email, media uploads, or Google login features:
 
 ```env
 # Server Configuration
-PORT=3000
 NODE_ENV=development
+PORT=8080
+FRONT_END_URL=http://localhost:3000
 
 # Database Configuration
 DB_HOST=localhost
 DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
-DB_NAME=ecommerce_clothing
-DB_PORT=3306
+DB_NAME=stylex
+# Optional: overrides used when NODE_ENV=test or NODE_ENV=production
+DB_NAME_TEST=stylex_test
+DB_NAME_PROD=stylex_prod
 
 # JWT Secret
 JWT_SECRET=your_jwt_secret_key_here
-JWT_EXPIRE=7d
+JWT_EXPIRES_IN=7d
 
-# Email Configuration (Optional)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASSWORD=your_email_password
+# Email Configuration (required for verification + password reset emails)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM="StyleX Support <no-reply@stylex.com>"
 
-# Payment Gateway (Optional)
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+# Cloudinary Configuration (required for avatar uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 
-# File Upload
-MAX_FILE_SIZE=5000000
-FILE_UPLOAD_PATH=./public/uploads
+# Google Auth (required for Google login)
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```
 
 ## 🗄️ Database Setup
@@ -85,24 +88,22 @@ mysql -u root -p
 ```
 
 ```sql
-CREATE DATABASE ecommerce_clothing;
-USE ecommerce_clothing;
+CREATE DATABASE stylex;
+USE stylex;
 ```
 
-2. **Run database migrations** (if available)
+If you plan to run tests or production locally, also create databases matching `DB_NAME_TEST` and `DB_NAME_PROD`.
+
+2. **Run database migrations**
 
 ```bash
-npm run migrate
-# or
-yarn migrate
+npx sequelize-cli db:migrate
 ```
 
-3. **Seed the database** (optional, if seeders are available)
+3. **Test the database connection** (optional)
 
 ```bash
-npm run seed
-# or
-yarn seed
+node scripts/test-db.js
 ```
 
 ## 🏃 Running the Application
@@ -115,7 +116,7 @@ npm run dev
 yarn dev
 ```
 
-The server will start on `http://localhost:3000` (or the port specified in your `.env` file).
+The server will start on `http://localhost:8080` (or the port specified in your `.env` file).
 
 ### Production Mode
 
@@ -130,95 +131,57 @@ yarn start
 ### Base URL
 
 ```
-http://localhost:3000/api/v1
+http://localhost:8080/api/v1
 ```
 
 ### Main Endpoints
 
+#### Health
+- `GET /api/v1/health` - Health check
+
 #### Authentication
 - `POST /api/v1/auth/register` - Register a new user
 - `POST /api/v1/auth/login` - Login user
-- `POST /api/v1/auth/logout` - Logout user
-- `GET /api/v1/auth/me` - Get current user
-- `PUT /api/v1/auth/updatedetails` - Update user details
-- `PUT /api/v1/auth/updatepassword` - Update password
-- `POST /api/v1/auth/forgotpassword` - Forgot password
-- `PUT /api/v1/auth/resetpassword/:resettoken` - Reset password
+- `POST /api/v1/auth/change-password` - Change password (authenticated)
+- `POST /api/v1/auth/forgot-password` - Request password reset
+- `POST /api/v1/auth/reset-password` - Reset password with token
+- `POST /api/v1/auth/google` - Login with Google
 
-#### Products
-- `GET /api/v1/products` - Get all products
-- `GET /api/v1/products/:id` - Get single product
-- `POST /api/v1/products` - Create new product (Admin)
-- `PUT /api/v1/products/:id` - Update product (Admin)
-- `DELETE /api/v1/products/:id` - Delete product (Admin)
+#### Users
+- `GET /api/v1/users/profile` - Get current user profile
+- `PATCH /api/v1/users/profile` - Update current user profile
+- `POST /api/v1/users/avatar` - Upload user avatar (multipart/form-data, field: `avatar`)
+- `POST /api/v1/users/send-verification-otp` - Send email verification OTP
+- `POST /api/v1/users/verify-email` - Verify email with OTP
 
-#### Categories
-- `GET /api/v1/categories` - Get all categories
-- `GET /api/v1/categories/:id` - Get single category
-- `POST /api/v1/categories` - Create category (Admin)
-- `PUT /api/v1/categories/:id` - Update category (Admin)
-- `DELETE /api/v1/categories/:id` - Delete category (Admin)
+#### Addresses
+- `GET /api/v1/addresses` - Get user addresses
+- `POST /api/v1/addresses` - Create an address
+- `PUT /api/v1/addresses/:id` - Update an address
+- `DELETE /api/v1/addresses/:id` - Delete an address
 
-#### Cart
-- `GET /api/v1/cart` - Get user cart
-- `POST /api/v1/cart` - Add item to cart
-- `PUT /api/v1/cart/:id` - Update cart item
-- `DELETE /api/v1/cart/:id` - Remove item from cart
-
-#### Orders
-- `GET /api/v1/orders` - Get all orders (Admin) / Get user orders
-- `GET /api/v1/orders/:id` - Get single order
-- `POST /api/v1/orders` - Create new order
-- `PUT /api/v1/orders/:id` - Update order (Admin)
-- `DELETE /api/v1/orders/:id` - Cancel order
-
-#### Users (Admin only)
-- `GET /api/v1/users` - Get all users
-- `GET /api/v1/users/:id` - Get single user
-- `PUT /api/v1/users/:id` - Update user
-- `DELETE /api/v1/users/:id` - Delete user
-
-For detailed API documentation with request/response examples, please refer to the [API Documentation](./docs/API.md) file.
+#### Admin (Users)
+- `GET /api/v1/admin/users` - Get all users (Admin)
+- `GET /api/v1/admin/users/:id` - Get user by ID (Admin)
+- `PUT /api/v1/admin/users/:id` - Update user (Admin)
 
 ## 📁 Project Structure
 
 ```
 E-commerce-Clothing-BE_node/
-├── config/              # Configuration files
-│   └── database.js      # Database configuration
-├── controllers/         # Route controllers
-│   ├── auth.js
-│   ├── products.js
-│   ├── categories.js
-│   ├── cart.js
-│   ├── orders.js
-│   └── users.js
-├── middleware/          # Custom middleware
-│   ├── auth.js
-│   ├── error.js
-│   └── async.js
-├── models/              # Database models
-│   ├── User.js
-│   ├── Product.js
-│   ├── Category.js
-│   ├── Cart.js
-│   └── Order.js
-├── routes/              # API routes
-│   ├── auth.js
-│   ├── products.js
-│   ├── categories.js
-│   ├── cart.js
-│   ├── orders.js
-│   └── users.js
-├── utils/               # Utility functions
-│   ├── errorResponse.js
-│   ├── sendEmail.js
-│   └── upload.js
-├── public/              # Static files
-│   └── uploads/         # Uploaded images
+├── scripts/             # Utility scripts
+├── src/
+│   ├── app.js           # Express app setup
+│   ├── server.js        # App entry point
+│   ├── config/          # Configuration files
+│   ├── controllers/     # Route controllers
+│   ├── middlewares/     # Custom middleware
+│   ├── migrations/      # Sequelize migrations
+│   ├── models/          # Database models
+│   ├── routes/          # API routes
+│   └── services/        # Business logic/services
 ├── .env.example         # Example environment variables
 ├── .gitignore           # Git ignore file
-├── server.js            # App entry point
 ├── package.json         # Package dependencies
 └── README.md            # This file
 ```
@@ -229,8 +192,6 @@ Run tests using:
 
 ```bash
 npm test
-# or
-yarn test
 ```
 
 ## 🔧 Available Scripts
@@ -238,9 +199,6 @@ yarn test
 - `npm start` - Start the server in production mode
 - `npm run dev` - Start the server in development mode with nodemon
 - `npm test` - Run tests
-- `npm run lint` - Run ESLint
-- `npm run migrate` - Run database migrations
-- `npm run seed` - Seed the database
 
 ## 🛠️ Built With
 
@@ -254,6 +212,8 @@ yarn test
 - **express-validator** - Input validation
 - **multer** - File upload
 - **nodemailer** - Email sending
+- **cloudinary** - Media storage
+- **google-auth-library** - Google OAuth support
 
 ## 🤝 Contributing
 
