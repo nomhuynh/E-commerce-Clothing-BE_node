@@ -3,57 +3,49 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Products', {
-      product_id: {
+    await queryInterface.createTable('ProductImages', {
+      image_id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
-      category_id: {
+      product_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'Categories',
-          key: 'category_id'
+          model: 'Products',
+          key: 'product_id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      material_id: {
+      color_id: {
         type: Sequelize.UUID,
         allowNull: true,
         references: {
-          model: 'Materials',
-          key: 'material_id'
+          model: 'Colors',
+          key: 'color_id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },
-      name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-        comment: 'Tên sản phẩm'
-      },
-      description: {
+      image_url: {
         type: Sequelize.TEXT,
+        allowNull: false
+      },
+      alt_text: {
+        type: Sequelize.STRING(255),
         allowNull: true,
-        comment: 'Mô tả chi tiết'
+        comment: 'Mô tả ảnh cho SEO'
       },
-      base_price: {
-        type: Sequelize.DECIMAL(15, 2),
-        allowNull: false,
-        comment: 'Giá gốc niêm yết (Java BigDecimal)'
+      is_thumbnail: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
-      gender: {
-        type: Sequelize.ENUM('MALE', 'FEMALE', 'UNISEX'),
-        allowNull: false,
-        comment: 'Giới tính (Mapped to Java Enum)'
-      },
-      age_group: {
-        type: Sequelize.ENUM('ADULT', 'TEEN', 'KID', 'BABY'),
-        allowNull: false,
-        comment: 'Độ tuổi'
+      sort_order: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
       },
       created_at: {
         allowNull: false,
@@ -70,9 +62,12 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
+
+    // Indexes
+    await queryInterface.addIndex('ProductImages', ['product_id']);
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Products');
+    await queryInterface.dropTable('ProductImages');
   }
 };

@@ -23,12 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     }
     ProductUsage.init({
         product_id: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.UUID,
             primaryKey: true,
             allowNull: false
         },
         usage_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             primaryKey: true,
             allowNull: false
         }

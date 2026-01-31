@@ -23,17 +23,17 @@ module.exports = (sequelize, DataTypes) => {
     }
     Product.init({
         product_id: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.UUID,
             primaryKey: true,
-            autoIncrement: true,
+            defaultValue: DataTypes.UUIDV4,
             allowNull: false
         },
         category_id: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.UUID,
             allowNull: false
         },
         material_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull: true
         },
         name: {

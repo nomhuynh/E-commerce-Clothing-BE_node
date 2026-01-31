@@ -6,9 +6,9 @@ module.exports = {
     await queryInterface.createTable('Categories', {
       category_id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.BIGINT
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       name: {
         type: Sequelize.STRING(100),
@@ -22,7 +22,7 @@ module.exports = {
         comment: 'URL thân thiện: ao-thun-nam'
       },
       parent_id: {
-        type: Sequelize.BIGINT,
+        type: Sequelize.UUID,
         allowNull: true,
         comment: 'Danh mục cha, Null nếu là danh mục gốc',
         references: {

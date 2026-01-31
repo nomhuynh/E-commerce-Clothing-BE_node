@@ -3,7 +3,7 @@ const {
     Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-    class Category extends Model {
+    class ProductImage extends Model {
         /**
          * Helper method for defining associations.
          * This method is not a part of Sequelize lifecycle.
@@ -11,54 +11,55 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // define association here
-            Category.hasMany(models.Category, {
-                as: 'children',
-                foreignKey: 'parent_id'
+            ProductImage.belongsTo(models.Product, {
+                foreignKey: 'product_id',
+                as: 'product'
             });
-            Category.belongsTo(models.Category, {
-                as: 'parent',
-                foreignKey: 'parent_id'
+            ProductImage.belongsTo(models.Color, {
+                foreignKey: 'color_id',
+                as: 'color'
             });
         }
     }
-    Category.init({
-        category_id: {
+    ProductImage.init({
+        image_id: {
             type: DataTypes.UUID,
             primaryKey: true,
             defaultValue: DataTypes.UUIDV4,
             allowNull: false
         },
-        name: {
-            type: DataTypes.STRING(100),
-            allowNull: false,
-            validate: {
-                notEmpty: true
-            }
+        product_id: {
+            type: DataTypes.UUID,
+            allowNull: false
         },
-        slug: {
-            type: DataTypes.STRING(150),
-            allowNull: false,
-            unique: true,
-            validate: {
-                notEmpty: true
-            }
-        },
-        parent_id: {
+        color_id: {
             type: DataTypes.UUID,
             allowNull: true
         },
-        image: {
-            type: DataTypes.STRING,
+        image_url: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+            validate: {
+                notEmpty: true,
+                isUrl: true
+            }
+        },
+        alt_text: {
+            type: DataTypes.STRING(255),
             allowNull: true
         },
-        is_active: {
+        is_thumbnail: {
             type: DataTypes.BOOLEAN,
-            defaultValue: true
+            defaultValue: false
+        },
+        sort_order: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
         }
     }, {
         sequelize,
-        modelName: 'Category',
-        tableName: 'Categories',
+        modelName: 'ProductImage',
+        tableName: 'ProductImages',
         timestamps: true,
         underscored: true,
         paranoid: true,
@@ -66,5 +67,5 @@ module.exports = (sequelize, DataTypes) => {
         updatedAt: 'updated_at',
         deletedAt: 'deleted_at'
     });
-    return Category;
+    return ProductImage;
 };

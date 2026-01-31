@@ -13,9 +13,9 @@ module.exports = (sequelize, DataTypes) => {
     }
     Size.init({
         size_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             primaryKey: true,
-            autoIncrement: true,
+            defaultValue: DataTypes.UUIDV4,
             allowNull: false
         },
         name: {
