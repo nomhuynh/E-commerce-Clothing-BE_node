@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
                 as: 'parent',
                 foreignKey: 'parent_id'
             });
+            Category.hasMany(models.Product, {
+                foreignKey: 'category_id',
+                as: 'products'
+            });
         }
     }
     Category.init({

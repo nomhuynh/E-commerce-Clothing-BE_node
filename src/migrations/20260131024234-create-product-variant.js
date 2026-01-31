@@ -96,6 +96,12 @@ module.exports = {
     // Indexes for optimization
     await queryInterface.addIndex('ProductVariants', ['product_id']);
     await queryInterface.addIndex('ProductVariants', ['sku']);
+
+    await queryInterface.addConstraint('ProductVariants', {
+      fields: ['product_id', 'color_id', 'size_id'],
+      type: 'unique',
+      name: 'unique_product_variant_combination'
+    });
   },
 
   async down(queryInterface, Sequelize) {

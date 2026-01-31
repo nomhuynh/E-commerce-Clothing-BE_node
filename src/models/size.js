@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // define association here
+            Size.hasMany(models.ProductVariant, {
+                foreignKey: 'size_id',
+                as: 'variants'
+            });
         }
     }
     Size.init({

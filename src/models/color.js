@@ -9,6 +9,14 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // define association here
+            Color.hasMany(models.ProductVariant, {
+                foreignKey: 'color_id',
+                as: 'variants'
+            });
+            Color.hasMany(models.ProductImage, {
+                foreignKey: 'color_id',
+                as: 'images'
+            });
         }
     }
     Color.init({
