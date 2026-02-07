@@ -12,6 +12,7 @@ router.use('/health', healthRoute);
 router.use('/auth', authRoute);
 router.use('/users', userRoute);
 router.use('/addresses', addressRoute);
+router.use('/products', require('./product.route'));
 router.use('/admin/users', adminUserRoute);
 
 module.exports = router;
