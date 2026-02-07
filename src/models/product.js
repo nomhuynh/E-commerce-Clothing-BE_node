@@ -33,6 +33,12 @@ module.exports = (sequelize, DataTypes) => {
                 otherKey: 'usage_id',
                 as: 'usages'
             });
+            Product.belongsToMany(models.Promotion, {
+                through: models.PromotionProduct,
+                foreignKey: 'product_id',
+                otherKey: 'promotion_id',
+                as: 'promotions'
+            });
         }
     }
     Product.init({
